@@ -11,15 +11,23 @@ const busScheduleRoutes = require("./routes/busScheduleRoutes");
 
 const app = express();
 
+// ✅ CORS Setup — allow frontend domain
+app.use(
+  cors({
+    origin: "https://busbook-psi.vercel.app", // your frontend Vercel link
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 // ✅ Middleware
-app.use(cors());
 app.use(express.json());
 
 // ✅ API Routes
-app.use("/api/user", userRoutes);              // User signup & login
-app.use("/api/routes", routeRoutes);           // Route management
-app.use("/api/admin", adminRoutes);            // User and route deletion
-app.use("/api/bus-schedule", busScheduleRoutes);
+app.use("/api/user", userRoutes); // User signup & login
+app.use("/api/routes", routeRoutes); // Route management
+app.use("/api/admin", adminRoutes); // Admin operations
+app.use("/api/bus-schedule", busScheduleRoutes); // Bus schedule management
 
 // ✅ Database Connection
 mongoose
@@ -27,23 +35,22 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-
 // ✅ Basic test routes
 app.get("/", (req, res) => {
-  res.redirect("/login");
+  res.send("✅ Backend running successfully on Vercel!");
 });
 
 app.get("/login", (req, res) => {
-  res.send("Please login first — (React login page will go here later).");
+  res.send("🔐 Login endpoint active. Use frontend for actual login UI.");
 });
 
 app.get("/home", (req, res) => {
-  res.send("Login successful! Welcome to the Bus Booking and Tracking Application.");
+  res.send("🏠 Home route working fine.");
 });
 
 // ✅ Error handler for unmatched routes
 app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
+  res.status(404).json({ message: "❌ Route not found" });
 });
 
 // ✅ Global error handler
@@ -52,8 +59,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal Server Error", error: err.message });
 });
 
-// ✅ Start server
+// ✅ Start server (for local testing)
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running locally on port ${PORT}`);
 });
+
+// ✅ Export app for Vercel serverless functions
+module.exports = app;
