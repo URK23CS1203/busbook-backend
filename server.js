@@ -11,41 +11,39 @@ const busScheduleRoutes = require("./routes/busScheduleRoutes");
 
 const app = express();
 
+// ✅ Middleware
+app.use(express.json());
+
 // ✅ CORS Setup — allow frontend domain
 app.use(
   cors({
-    origin: "https://busbook-psi.vercel.app", // your frontend Vercel link
+    origin: [
+      "https://busbook-psi.vercel.app", // frontend on Vercel
+      "http://localhost:5173",          // allow local dev too
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 
-// ✅ Middleware
-app.use(express.json());
-
-// ✅ API Routes
-app.use("/api/user", userRoutes); // User signup & login
-app.use("/api/routes", routeRoutes); // Route management
-app.use("/api/admin", adminRoutes); // Admin operations
-app.use("/api/bus-schedule", busScheduleRoutes); // Bus schedule management
-
-// ✅ Database Connection
+// ✅ MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB connected successfully"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ✅ Basic test routes
+// ✅ API Routes
+app.use("/api/user", userRoutes);         // User signup & login
+app.use("/api/routes", routeRoutes);      // Route management
+app.use("/api/admin", adminRoutes);       // Admin operations
+app.use("/api/bus-schedule", busScheduleRoutes); // Bus schedule management
+
+// ✅ Root Test Route
 app.get("/", (req, res) => {
-  res.send("✅ Backend running successfully on Vercel!");
-});
-
-app.get("/login", (req, res) => {
-  res.send("🔐 Login endpoint active. Use frontend for actual login UI.");
-});
-
-app.get("/home", (req, res) => {
-  res.send("🏠 Home route working fine.");
+  res.status(200).send("✅ Backend running successfully on Vercel!");
 });
 
 // ✅ Error handler for unmatched routes
@@ -55,15 +53,20 @@ app.use((req, res) => {
 
 // ✅ Global error handler
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err.stack);
-  res.status(500).json({ message: "Internal Server Error", error: err.message });
+  console.error("❌ Server Error:", err.stack);
+  res.status(500).json({
+    message: "Internal Server Error",
+    error: err.message,
+  });
 });
 
-// ✅ Start server (for local testing)
-const PORT = process.env.PORT || 7000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running locally on port ${PORT}`);
-});
+// ✅ Local server for development
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 7000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running locally on port ${PORT}`);
+  });
+}
 
-// ✅ Export app for Vercel serverless functions
+// ✅ Export for Vercel serverless
 module.exports = app;
